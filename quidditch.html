@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quidditch Analytics Dashboard — H.J. Potter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-elev: #121933;
+      --bg-card: #161e3a;
+      --ink: #e9ecf5;
+      --ink-dim: #a6adc1;
+      --accent: #c9a24a;
+      --gryff: #ae0001;
+      --slyth: #1a472a;
+      --raven: #0e1a40;
+      --huff: #ecb939;
+      --line: rgba(255,255,255,0.08);
+      --good: #4ade80;
+      --bad: #f87171;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    header.top {
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(174,0,1,0.12), transparent);
+    }
+    header.top .wrap { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; flex-wrap: wrap; gap: 12px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .crest {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #d8b35e, #7a1f1f 70%);
+      box-shadow: 0 0 0 2px var(--accent), 0 6px 18px rgba(0,0,0,0.4);
+    }
+    .brand h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.4rem; margin: 0; letter-spacing: 0.3px;
+    }
+    .brand small { color: var(--ink-dim); font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase; }
+    .meta { color: var(--ink-dim); font-size: 0.85rem; }
+    .meta strong { color: var(--ink); }
+
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .controls select, .controls button {
+      background: var(--bg-card); color: var(--ink);
+      border: 1px solid var(--line); padding: 7px 12px; border-radius: 8px;
+      font-size: 0.85rem; cursor: pointer;
+    }
+    .controls button.active, .controls select:focus {
+      border-color: var(--accent); color: var(--accent);
+    }
+
+    /* Layout */
+    main { padding: 28px 0 60px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 18px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+    .card h2 {
+      font-family: 'Cormorant Garamond', serif;
+      margin: 0 0 4px;
+      font-size: 1.15rem;
+    }
+    .card .sub { color: var(--ink-dim); font-size: 0.8rem; margin-bottom: 14px; }
+
+    .col-3 { grid-column: span 3; }
+    .col-4 { grid-column: span 4; }
+    .col-6 { grid-column: span 6; }
+    .col-8 { grid-column: span 8; }
+    .col-12 { grid-column: span 12; }
+    @media (max-width: 880px) {
+      .col-3, .col-4, .col-6, .col-8 { grid-column: span 12; }
+    }
+
+    /* KPI */
+    .kpi { display: flex; flex-direction: column; gap: 4px; }
+    .kpi .value { font-size: 1.8rem; font-weight: 700; font-family: 'Cormorant Garamond', serif; color: var(--accent); }
+    .kpi .label { color: var(--ink-dim); font-size: 0.78rem; letter-spacing: 1.5px; text-transform: uppercase; }
+    .kpi .delta { font-size: 0.78rem; }
+    .kpi .delta.up { color: var(--good); }
+    .kpi .delta.down { color: var(--bad); }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+    th { color: var(--ink-dim); font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    td.right, th.right { text-align: right; }
+    .house-pip { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+    .house-pip.gryff { background: var(--gryff); }
+    .house-pip.slyth { background: var(--slyth); }
+    .house-pip.raven { background: var(--raven); border: 1px solid #4a5fb0; }
+    .house-pip.huff { background: var(--huff); }
+    .num { font-variant-numeric: tabular-nums; }
+
+    canvas { max-width: 100%; }
+
+    .footnote { color: var(--ink-dim); font-size: 0.75rem; margin-top: 30px; text-align: center; }
+    .footnote a { color: var(--ink-dim); border-bottom: 1px dotted var(--ink-dim); }
+  </style>
+</head>
+<body>
+
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">
+        <div class="crest" aria-hidden="true"></div>
+        <div>
+          <h1>Quidditch Analytics Dashboard</h1>
+          <small>Hogwarts League · 8-season retrospective</small>
+        </div>
+      </div>
+      <div class="meta">
+        Built by <strong>H.J. Potter</strong> ·
+        <a href="index.html">← back to portfolio</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+
+      <div class="controls" style="margin-bottom:18px;">
+        <select id="seasonSelect" aria-label="Season">
+          <option value="2017-25">All Seasons (2017-2025)</option>
+          <option value="2024-25" selected>2024-25 Season</option>
+          <option value="2023-24">2023-24 Season</option>
+          <option value="2022-23">2022-23 Season</option>
+        </select>
+        <button data-view="overview" class="active">Overview</button>
+        <button data-view="players">Players</button>
+        <button data-view="snitch">Snitch</button>
+        <button data-view="referees">Referee bias</button>
+      </div>
+
+      <div class="grid">
+
+        <div class="card col-3">
+          <div class="kpi">
+            <span class="label">Matches played</span>
+            <span class="value num" id="kpi-matches">96</span>
+            <span class="delta up">+12 vs prior season</span>
+          </div>
+        </div>
+        <div class="card col-3">
+          <div class="kpi">
+            <span class="label">Avg goals / match</span>
+            <span class="value num">14.2</span>
+            <span class="delta up">+1.8 vs prior season</span>
+          </div>
+        </div>
+        <div class="card col-3">
+          <div class="kpi">
+            <span class="label">Avg snitch capture (min)</span>
+            <span class="value num">87</span>
+            <span class="delta down">−6 vs prior season</span>
+          </div>
+        </div>
+        <div class="card col-3">
+          <div class="kpi">
+            <span class="label">Median referee bias</span>
+            <span class="value num">+0.42σ</span>
+            <span class="delta down">flagged for review</span>
+          </div>
+        </div>
+
+        <div class="card col-8">
+          <h2>Goals scored per match — rolling 5-match average</h2>
+          <p class="sub">All four houses, 2024-25 season</p>
+          <canvas id="goalsChart" height="160"></canvas>
+        </div>
+
+        <div class="card col-4">
+          <h2>House standings</h2>
+          <p class="sub">Through round 24</p>
+          <table>
+            <thead>
+              <tr><th>House</th><th class="right">W-L</th><th class="right">Pts</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="house-pip gryff"></span>Gryffindor</td><td class="right num">18-6</td><td class="right num">2,140</td></tr>
+              <tr><td><span class="house-pip slyth"></span>Slytherin</td><td class="right num">16-8</td><td class="right num">1,930</td></tr>
+              <tr><td><span class="house-pip raven"></span>Ravenclaw</td><td class="right num">12-12</td><td class="right num">1,650</td></tr>
+              <tr><td><span class="house-pip huff"></span>Hufflepuff</td><td class="right num">8-16</td><td class="right num">1,240</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card col-6">
+          <h2>Top chasers — expected goals (xG)</h2>
+          <p class="sub">Min. 12 matches; 2024-25 season</p>
+          <table>
+            <thead>
+              <tr><th>Player</th><th>House</th><th class="right">G</th><th class="right">xG</th><th class="right">G − xG</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Angelina Johnson</td><td><span class="house-pip gryff"></span>GRY</td><td class="right num">42</td><td class="right num">35.4</td><td class="right num" style="color:var(--good)">+6.6</td></tr>
+              <tr><td>Katie Bell</td><td><span class="house-pip gryff"></span>GRY</td><td class="right num">38</td><td class="right num">33.1</td><td class="right num" style="color:var(--good)">+4.9</td></tr>
+              <tr><td>Marcus Flint</td><td><span class="house-pip slyth"></span>SLY</td><td class="right num">36</td><td class="right num">38.8</td><td class="right num" style="color:var(--bad)">−2.8</td></tr>
+              <tr><td>Roger Davies</td><td><span class="house-pip raven"></span>RAV</td><td class="right num">29</td><td class="right num">27.5</td><td class="right num" style="color:var(--good)">+1.5</td></tr>
+              <tr><td>Cedric Diggory</td><td><span class="house-pip huff"></span>HUF</td><td class="right num">24</td><td class="right num">26.0</td><td class="right num" style="color:var(--bad)">−2.0</td></tr>
+              <tr><td>Adrian Pucey</td><td><span class="house-pip slyth"></span>SLY</td><td class="right num">22</td><td class="right num">19.8</td><td class="right num" style="color:var(--good)">+2.2</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card col-6">
+          <h2>Snitch capture probability</h2>
+          <p class="sub">Probability seeker captures the snitch by minute <em>t</em>, conditional on broom class</p>
+          <canvas id="snitchChart" height="200"></canvas>
+        </div>
+
+        <div class="card col-6">
+          <h2>Referee bias — calls against home team</h2>
+          <p class="sub">Standardised z-score; |z| &gt; 2 flagged in red</p>
+          <canvas id="refChart" height="200"></canvas>
+        </div>
+
+        <div class="card col-6">
+          <h2>Season-on-season scoring trend</h2>
+          <p class="sub">Mean goals per match by house, 2017-2025</p>
+          <canvas id="seasonChart" height="200"></canvas>
+        </div>
+
+      </div>
+
+      <p class="footnote">
+        All data is synthetic and for portfolio-demonstration purposes only.
+        Source: <a href="https://github.com/clg236/quidditch-analytics">github.com/clg236/quidditch-analytics</a>
+      </p>
+
+    </div>
+  </main>
+
+  <script>
+    // Shared chart styling
+    Chart.defaults.color = '#a6adc1';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+    Chart.defaults.font.size = 11;
+
+    const HOUSE = {
+      gryff: '#ae0001',
+      slyth: '#2d7a4a',
+      raven: '#4a5fb0',
+      huff: '#ecb939',
+    };
+
+    // ---- Goals per match (line) ----
+    const matchLabels = Array.from({length: 24}, (_, i) => 'R' + (i+1));
+    new Chart(document.getElementById('goalsChart'), {
+      type: 'line',
+      data: {
+        labels: matchLabels,
+        datasets: [
+          { label: 'Gryffindor', data: [12,14,13,15,16,14,15,17,18,16,17,19,18,17,18,19,20,18,17,19,18,20,21,19], borderColor: HOUSE.gryff, backgroundColor: HOUSE.gryff+'22', tension: 0.35, borderWidth: 2 },
+          { label: 'Slytherin',  data: [13,13,14,14,15,15,16,15,15,16,17,16,17,18,17,18,17,18,17,18,17,17,18,18], borderColor: HOUSE.slyth, backgroundColor: HOUSE.slyth+'22', tension: 0.35, borderWidth: 2 },
+          { label: 'Ravenclaw',  data: [10,11,12,12,13,13,14,13,14,15,14,15,15,16,15,15,16,15,16,15,15,16,15,15], borderColor: HOUSE.raven, backgroundColor: HOUSE.raven+'22', tension: 0.35, borderWidth: 2 },
+          { label: 'Hufflepuff', data: [9,10,9,11,10,11,10,11,12,11,12,11,12,12,11,12,11,12,12,11,12,11,12,12], borderColor: HOUSE.huff, backgroundColor: HOUSE.huff+'22', tension: 0.35, borderWidth: 2 },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 14 } } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true, ticks: { stepSize: 5 } }
+        }
+      }
+    });
+
+    // ---- Snitch probability curves ----
+    const minutes = Array.from({length: 41}, (_, i) => i * 5);
+    const sigmoid = (x, k, m) => 1 / (1 + Math.exp(-k*(x-m)));
+    new Chart(document.getElementById('snitchChart'), {
+      type: 'line',
+      data: {
+        labels: minutes,
+        datasets: [
+          { label: 'Firebolt-class', data: minutes.map(m => sigmoid(m, 0.04, 70)), borderColor: HOUSE.gryff, tension: 0.4, borderWidth: 2, pointRadius: 0, fill: false },
+          { label: 'Nimbus 2001',    data: minutes.map(m => sigmoid(m, 0.035, 90)), borderColor: HOUSE.slyth, tension: 0.4, borderWidth: 2, pointRadius: 0, fill: false },
+          { label: 'Cleansweep 11',  data: minutes.map(m => sigmoid(m, 0.028, 110)), borderColor: HOUSE.huff, tension: 0.4, borderWidth: 2, pointRadius: 0, fill: false },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 14 } } },
+        scales: {
+          x: { title: { display: true, text: 'Minutes since pitch-up' }, grid: { display: false } },
+          y: { title: { display: true, text: 'P(captured)' }, min: 0, max: 1, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+
+    // ---- Referee bias bars ----
+    const refs = ['Hooch','Bagman','Mostafa','Cresswell','Smethwyck','Bones','Quigley','Marchbanks'];
+    const refZ  = [0.12, 1.4, -0.7, 2.3, -2.1, 0.4, 0.9, -0.2];
+    new Chart(document.getElementById('refChart'), {
+      type: 'bar',
+      data: {
+        labels: refs,
+        datasets: [{
+          label: 'z-score (calls vs. expected)',
+          data: refZ,
+          backgroundColor: refZ.map(z => Math.abs(z) > 2 ? '#f87171' : (z > 0 ? '#c9a24a' : '#4a5fb0')),
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.05)' }, suggestedMin: -3, suggestedMax: 3 },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+
+    // ---- Season trend ----
+    const seasons = ['17-18','18-19','19-20','20-21','21-22','22-23','23-24','24-25'];
+    new Chart(document.getElementById('seasonChart'), {
+      type: 'line',
+      data: {
+        labels: seasons,
+        datasets: [
+          { label: 'Gryffindor', data: [11.2, 12.1, 11.8, 13.0, 14.2, 14.8, 15.1, 16.4], borderColor: HOUSE.gryff, tension: 0.35, borderWidth: 2 },
+          { label: 'Slytherin',  data: [12.0, 12.4, 13.0, 13.5, 14.0, 14.2, 15.0, 15.3], borderColor: HOUSE.slyth, tension: 0.35, borderWidth: 2 },
+          { label: 'Ravenclaw',  data: [10.8, 11.2, 11.5, 12.0, 12.4, 12.9, 13.2, 13.6], borderColor: HOUSE.raven, tension: 0.35, borderWidth: 2 },
+          { label: 'Hufflepuff', data: [10.1, 10.4, 10.6, 10.8, 10.9, 11.2, 11.0, 11.3], borderColor: HOUSE.huff, tension: 0.35, borderWidth: 2 },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 14 } } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, suggestedMin: 8, suggestedMax: 18 }
+        }
+      }
+    });
+
+    // simple control button toggling (no real filtering — synthetic dataset)
+    document.querySelectorAll('.controls button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
