@@ -55,14 +55,13 @@
 
     /* Hero */
     header.hero { padding: 80px 0 60px; }
-    .hero-grid { display: grid; grid-template-columns: 1fr 260px; gap: 40px; align-items: center; }
+    .hero-grid { display: grid; grid-template-columns: 1fr 220px; gap: 40px; align-items: center; }
     .hero .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: 3px; font-size: 0.78rem; font-weight: 600; }
     .hero p.lead { font-size: 1.08rem; max-width: 56ch; }
     .avatar {
-      width: 260px; height: auto; aspect-ratio: 1 / 1;
-      border-radius: 12px;
-      object-fit: contain;
-      background: var(--bg-elev);
+      width: 220px; height: 220px; border-radius: 50%;
+      object-fit: cover;
+      background: #f4f6fb;
       border: 2px solid var(--accent);
       box-shadow: 0 10px 40px rgba(0,0,0,0.45);
       display: block;
@@ -115,6 +114,24 @@
     .row h3 { margin-bottom: 2px; }
     .row .where { color: var(--ink-dim); font-size: 0.92rem; margin-bottom: 6px; }
 
+    /* Photos */
+    .photos { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; grid-auto-rows: 220px; }
+    .photos figure { margin: 0; position: relative; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--line); background: var(--bg-elev); }
+    .photos figure img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+    .photos figure:hover img { transform: scale(1.03); }
+    .photos figure.tall { grid-row: span 2; }
+    .photos figcaption {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      padding: 14px 16px;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+      color: var(--ink); font-size: 0.85rem;
+    }
+    .photos figcaption strong { display: block; color: var(--accent); font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 2px; }
+    @media (max-width: 720px) {
+      .photos { grid-template-columns: 1fr 1fr; grid-auto-rows: 180px; }
+      .photos figure.tall { grid-row: span 2; grid-column: span 2; }
+    }
+
     /* Contact */
     .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
     .contact-grid a { display: block; padding: 14px 18px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); color: var(--ink); }
@@ -125,7 +142,7 @@
 
     @media (max-width: 720px) {
       .hero-grid { grid-template-columns: 1fr; text-align: center; }
-      .avatar { margin: 0 auto; width: 220px; }
+      .avatar { margin: 0 auto; width: 160px; height: 160px; }
       .row { grid-template-columns: 1fr; gap: 4px; }
       .contact-grid { grid-template-columns: 1fr; }
       nav.top ul { display: none; }
@@ -141,6 +158,7 @@
         <li><a href="#about">About</a></li>
         <li><a href="#projects">Projects</a></li>
         <li><a href="#experience">Experience</a></li>
+        <li><a href="#photos">Photos</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
     </div>
@@ -163,8 +181,8 @@
         </div>
       </div>
       <img class="avatar"
-           src="img/harry-goldman.png"
-           alt="Harry J. Potter at Goldman Sachs" />
+           src="https://api.dicebear.com/9.x/notionists/svg?seed=HarryJPotter&backgroundColor=b6e3f4"
+           alt="Portrait of Harry J. Potter" />
     </div>
   </header>
 
@@ -298,19 +316,20 @@
         </article>
 
         <article class="card">
-          <img src="https://picsum.photos/seed/marauders-map/600/360" alt="Map illustration" />
+          <img src="img/harry-goldman.png" alt="Harry on the Goldman Sachs trading floor" />
           <div class="body">
-            <h3>Marauder's Map — Geospatial Risk Tool</h3>
+            <h3>Goldman Sachs Spring Insight Programme</h3>
             <p>
-              Leaflet + PostGIS app that overlays counterparty exposure on a real-time map. A
-              proof-of-concept I built after a summer reading <em>The Big Short</em> three times
-              in a row.
+              Selected for the 2025 Spring Insight cohort in the London office. Shadowed the
+              Equity Derivatives desk, completed a mock vol-trading exercise, and built a
+              short pitch on systematic dispersion strategies that placed in the top 5 across
+              the cohort.
             </p>
             <div class="tags">
-              <span>JavaScript</span><span>PostGIS</span><span>Risk</span>
+              <span>Goldman Sachs</span><span>Equity Derivatives</span><span>Insight Programme</span>
             </div>
             <div class="links">
-              <a href="https://github.com/clg236/marauders-map">GitHub</a>
+              <a href="#photos">See photo</a>
             </div>
           </div>
         </article>
@@ -358,6 +377,52 @@
           </div>
         </div>
 
+      </div>
+    </div>
+  </section>
+
+  <section id="photos">
+    <div class="wrap">
+      <div class="label">Photos</div>
+      <h2>A few moments from the journey.</h2>
+      <p>From the Goldman Sachs Spring Insight programme to weekends on the Quidditch pitch.</p>
+
+      <div class="photos">
+        <figure class="tall">
+          <img src="img/harry-goldman.png" alt="Harry at the Goldman Sachs Spring Insight programme" />
+          <figcaption>
+            <strong>Spring 2025</strong>
+            Goldman Sachs Spring Insight Programme — London
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="https://picsum.photos/seed/hogwarts-graduation/600/600" alt="Graduation day at Hogwarts" />
+          <figcaption>
+            <strong>Jun 2025</strong>
+            Graduation day, Hogwarts
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="https://picsum.photos/seed/quidditch-final/600/600" alt="Quidditch finals" />
+          <figcaption>
+            <strong>May 2024</strong>
+            Quidditch House Cup final
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="https://picsum.photos/seed/london-skyline/600/600" alt="London skyline" />
+          <figcaption>
+            <strong>Jul 2024</strong>
+            First week in London
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="https://picsum.photos/seed/diagon-alley/600/600" alt="Diagon Alley summer" />
+          <figcaption>
+            <strong>Aug 2024</strong>
+            End of Gringotts summer programme
+          </figcaption>
+        </figure>
       </div>
     </div>
   </section>
